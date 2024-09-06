@@ -1,6 +1,5 @@
 ﻿using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL;
-using System.Collections.Generic;
 
 public class Objeto
 {
@@ -19,9 +18,8 @@ public class Objeto
         _rotacion = Vector3.Zero;
         _modelMatrix = Matrix4.Identity;
         _shaderProgram = shaderProgram;
+        CalcularCentroDeMasa();
     }
-
-
 
     public void AgregarParte(Parte parte)
     {
@@ -37,18 +35,11 @@ public class Objeto
 
     public void Dibujar(Matrix4 viewMatrix, Matrix4 projectionMatrix)
     {
-        GL.UseProgram(_shaderProgram);
-
         AplicarTransformaciones();
-
-        // Enviar las matrices al shader
-        GL.UniformMatrix4(GL.GetUniformLocation(_shaderProgram, "projection"), false, ref projectionMatrix);
-        GL.UniformMatrix4(GL.GetUniformLocation(_shaderProgram, "view"), false, ref viewMatrix);
-        GL.UniformMatrix4(GL.GetUniformLocation(_shaderProgram, "model"), false, ref _modelMatrix);
 
         foreach (var parte in _partes)
         {
-            parte.Dibujar(_modelMatrix, viewMatrix, projectionMatrix);
+            parte.Dibujar(_modelMatrix, viewMatrix, projectionMatrix, _shaderProgram);
         }
     }
 
@@ -61,6 +52,14 @@ public class Objeto
         _modelMatrix *= Matrix4.CreateRotationY(_rotacion.Y);
         _modelMatrix *= Matrix4.CreateRotationX(_rotacion.X);
 
+        foreach (var parte in _partes)
+        {
+            parte.AplicarTransformacion(_modelMatrix);
+        }
+    }
+    public void AplicarTransformacion(Matrix4 transformacion)
+    {
+        _modelMatrix *= transformacion;
         foreach (var parte in _partes)
         {
             parte.AplicarTransformacion(_modelMatrix);
@@ -89,7 +88,15 @@ public class Objeto
     public void EstablecerPosicion(Vector3 nuevaPosicion)
     {
         _posicion = nuevaPosicion;
-        AplicarTransformaciones();
+        ActualizarModelo();
+    }
+
+    private void ActualizarModelo()
+    {
+        _modelMatrix = Matrix4.CreateTranslation(_posicion) *
+                       Matrix4.CreateRotationX(_rotacion.X) *
+                       Matrix4.CreateRotationY(_rotacion.Y) *
+                       Matrix4.CreateRotationZ(_rotacion.Z);
     }
 
     public void Rotar(float angulo, Vector3 eje)
@@ -106,8 +113,6 @@ public class Objeto
             parte.AplicarTransformacion(_modelMatrix);
         }
     }
-
-
     private void CalcularCentroDeMasa()
     {
         Vector3 sumaCentros = Vector3.Zero;
@@ -134,8 +139,10 @@ public class Objeto
             _centroDeMasa = Vector3.Zero; // Por si no hay vértices
         }
     }
-
-
+    public List<Parte> GetPartes()
+    {
+        return _partes;
+    }
     public void Dispose()
     {
         foreach (var parte in _partes)

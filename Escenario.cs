@@ -1,6 +1,4 @@
 ﻿using OpenTK.Mathematics;
-using System.Collections.Generic;
-
 public class Escenario
 {
     private List<Objeto> _objetos;
@@ -22,12 +20,8 @@ public class Escenario
             objeto.Dibujar(viewMatrix, projectionMatrix);
         }
     }
-
-    public void Actualizar()
+    public List<Objeto> GetObjetos()
     {
-        foreach (var objeto in _objetos)
-        {
-            objeto.AplicarTransformaciones();
-        }
+        return _objetos;
     }
 }

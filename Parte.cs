@@ -1,12 +1,13 @@
 ﻿using OpenTK.Mathematics;
-using System.Collections.Generic;
-
+using OpenTK.Graphics.OpenGL;
 public class Parte
 {
     private List<Poligono> _poligonos;
     private Matrix4 _modelMatrix;
     private Vector3 _posicion;
     private Vector3 _rotacion;
+
+    private Vector3 color;
 
     public Parte()
     {
@@ -24,26 +25,36 @@ public class Parte
     {
         return _poligonos;
     }
-
-
-    public void Dibujar(Matrix4 modelMatrix, Matrix4 viewMatrix, Matrix4 projectionMatrix)
+    public void SetColor(Vector3 color)
     {
-        // Lógica de renderizado
         foreach (var poligono in _poligonos)
         {
-            poligono.Dibujar(modelMatrix, viewMatrix, projectionMatrix);
+            poligono.SetColor(color);
+        }
+    }
+    public void Dibujar(Matrix4 matrizModelo, Matrix4 matrizVista, Matrix4 matrizProyeccion, int shaderProgram)
+    {
+        ActualizarMatrizModelo();
+
+        GL.UseProgram(shaderProgram);
+
+        Matrix4 finalModelMatrix = matrizModelo * _modelMatrix;
+
+        foreach (var poligono in _poligonos)
+        {
+            poligono.Dibujar(finalModelMatrix, matrizVista, matrizProyeccion);
         }
     }
 
     public void AplicarTransformacion(Matrix4 transformacion)
     {
+        _modelMatrix *= transformacion;
+
         foreach (var poligono in _poligonos)
         {
-            poligono.AplicarTransformacion(transformacion);
+            poligono.AplicarTransformacion(_modelMatrix);
         }
-        ActualizarMatrizModelo();
     }
-
     private void ActualizarMatrizModelo()
     {
         _modelMatrix = Matrix4.CreateTranslation(_posicion) *
